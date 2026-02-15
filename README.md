@@ -43,6 +43,30 @@ docker compose up --build
 - User frontend is now FastAPI + Uvicorn at `http://localhost:3000` (served by `web` service in Docker Compose).
 - Admin frontend remains in `apps/admin-web` (Next.js scaffold) if you want a separate admin UI later.
 
+## Run Admin UI (`apps/admin-web`)
+`admin-web` is not part of `docker-compose.yml`, so run it separately.
+
+1. Start backend stack:
+
+```bash
+docker compose up -d
+```
+
+2. In another terminal:
+
+```bash
+cd apps/admin-web
+npm install
+npm run dev
+```
+
+3. Open:
+- `http://localhost:3001`
+
+Notes:
+- Admin UI calls gateway admin endpoints through `http://localhost:8000`.
+- Use an admin token to access admin data endpoints.
+
 ## Main gateway API (`http://localhost:8000`)
 - `POST /auth/signup`
 - `POST /auth/verify-email`
