@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title or "My Music" }}</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <h1>My Music</h1>
+        <p class="hint">Personal song library</p>
+      </div>
+      <nav class="nav">
+        <a class="nav-link {{ 'active' if active_page == 'home' else '' }}" href="/">Home</a>
+        <a class="nav-link {{ 'active' if active_page == 'search' else '' }}" href="/search">Search</a>
+        <a class="nav-link {{ 'active' if active_page == 'library' else '' }}" href="/library">Library</a>
+      </nav>
+      <div id="signedInAs" class="signed-in-indicator">Signed out</div>
+      <div class="gateway">
+        <span class="status-dot {{ 'ok' if gateway_ok else 'bad' }}"></span>
+        {{ "Gateway Online" if gateway_ok else "Gateway Offline" }}
+      </div>
+    </header>
+
+    <main class="container">{% block content %}{% endblock %}</main>
+
+    <div id="toast" class="toast hidden"></div>
+    <script>
+      window.APP_CONFIG = { apiBase: "{{ api_base }}" };
+    </script>
+    <script src="/static/core.js"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

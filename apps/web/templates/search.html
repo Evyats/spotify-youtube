@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel">
+  <div class="title-row">
+    <h2>Search Songs</h2>
+    <p id="authState" class="hint"></p>
+  </div>
+  <div class="row">
+    <input id="query" placeholder="Search for a song..." />
+    <button id="searchBtn">Search Top 3</button>
+  </div>
+  <div id="searchResults" class="list">
+    <p class="hint">Search results will appear here.</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/search.js"></script>
+{% endblock %}

@@ -28,8 +28,7 @@ def favicon():
 
 
 @app.get("/")
-async def index(request: Request):
-    # Quick sanity ping so users see if gateway is reachable.
+async def home(request: Request):
     gateway_ok = False
     try:
         async with httpx.AsyncClient(timeout=2.5) as client:
@@ -40,6 +39,40 @@ async def index(request: Request):
 
     return templates.TemplateResponse(
         request=request,
-        name="index.html",
-        context={"api_base": PUBLIC_API_BASE, "gateway_ok": gateway_ok},
+        name="home.html",
+        context={"api_base": PUBLIC_API_BASE, "gateway_ok": gateway_ok, "active_page": "home"},
+    )
+
+
+@app.get("/search")
+async def search_page(request: Request):
+    gateway_ok = False
+    try:
+        async with httpx.AsyncClient(timeout=2.5) as client:
+            resp = await client.get(f"{INTERNAL_API_BASE}/health")
+            gateway_ok = resp.status_code == 200
+    except Exception:
+        gateway_ok = False
+
+    return templates.TemplateResponse(
+        request=request,
+        name="search.html",
+        context={"api_base": PUBLIC_API_BASE, "gateway_ok": gateway_ok, "active_page": "search"},
+    )
+
+
+@app.get("/library")
+async def library_page(request: Request):
+    gateway_ok = False
+    try:
+        async with httpx.AsyncClient(timeout=2.5) as client:
+            resp = await client.get(f"{INTERNAL_API_BASE}/health")
+            gateway_ok = resp.status_code == 200
+    except Exception:
+        gateway_ok = False
+
+    return templates.TemplateResponse(
+        request=request,
+        name="library.html",
+        context={"api_base": PUBLIC_API_BASE, "gateway_ok": gateway_ok, "active_page": "library"},
     )

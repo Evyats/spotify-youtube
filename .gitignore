@@ -19,6 +19,7 @@ Thumbs.db
 # Local env
 .env
 .env.*
+!.env.example
 
 # Service logs or temp files
 *.log

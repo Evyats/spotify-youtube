@@ -25,14 +25,45 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 14px;
   padding: 14px 20px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
-.topbar h1 {
+.brand h1 {
   margin: 0;
   font-size: 1.15rem;
+}
+
+.brand .hint {
+  margin: 2px 0 0;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--muted);
+  border: 1px solid transparent;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.nav-link:hover {
+  color: var(--text);
+  background: #eef2ff;
+}
+
+.nav-link.active {
+  color: #1e3a8a;
+  background: #dbe8ff;
+  border-color: #c2d7ff;
 }
 
 .gateway {
@@ -41,6 +72,19 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.signed-in-indicator {
+  font-size: 0.9rem;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fff;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-dot {
@@ -147,6 +191,7 @@ button.secondary:hover {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 #player {
@@ -173,5 +218,9 @@ button.secondary:hover {
 @media (max-width: 700px) {
   .row {
     flex-direction: column;
+  }
+
+  .topbar {
+    align-items: flex-start;
   }
 }

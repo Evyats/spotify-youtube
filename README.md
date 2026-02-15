@@ -2,13 +2,6 @@
 
 Python-first microservices MVP for a Spotify-like app with YouTube search/import flow.
 
-## Implemented phases
-1. Foundation: microservices + persistent Docker data folders + Git repo.
-2. Search MVP: YouTube search endpoint with ranking and top-3 selection.
-3. Download MVP: async job creation in `download-service` and Celery worker pipeline.
-4. Playback MVP: range-capable stream endpoint backed by MinIO object storage.
-5. Admin MVP: admin-protected endpoints for users/songs/jobs via gateway.
-6. Hardening: Alembic migrations, refresh-token rotation store, email verification flow, Google OAuth wiring, metrics endpoint.
 
 ## Stack
 - FastAPI services
@@ -16,7 +9,7 @@ Python-first microservices MVP for a Spotify-like app with YouTube search/import
 - PostgreSQL via SQLAlchemy
 - Alembic for schema migrations
 - MinIO (S3-compatible) for audio objects
-- Next.js web + admin-web apps
+- FastAPI web frontend + optional Next.js admin scaffold
 - Docker Compose local orchestration
 
 ## Local persistent data
@@ -25,6 +18,21 @@ Python-first microservices MVP for a Spotify-like app with YouTube search/import
 - `infra/docker/data/minio`
 
 These folders keep data between container restarts.
+
+## Environment File
+Before starting the app, create a local `.env` file from the template:
+
+```bash
+cp .env.example .env
+```
+
+Windows `cmd`:
+
+```cmd
+copy .env.example .env
+```
+
+Then edit `.env` and set your real values (especially secrets like `JWT_SECRET`, DB credentials, and OAuth keys if used).
 
 ## Run
 ```bash
