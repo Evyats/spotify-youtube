@@ -38,6 +38,7 @@ yarn-error.log*
 pnpm-debug.log*
 coverage/
 
+
 # Local persisted infra data (keep folder structure only)
 infra/docker/data/postgres/*
 infra/docker/data/redis/*
@@ -45,3 +46,8 @@ infra/docker/data/minio/*
 !infra/docker/data/postgres/.gitkeep
 !infra/docker/data/redis/.gitkeep
 !infra/docker/data/minio/.gitkeep
+
+
+
+
+AGENTS.md

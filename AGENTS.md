@@ -4,9 +4,10 @@
 
 ## Chatting
 
-- I might end the prompts with commands. It will start with '\', followed by  all the commands I want for you to consider in your response. These are the commands:
+- I might end the prompts with commands. It will start with '\', followed by  all the commands I want for you to consider in your response. i can use one or several of these, ie: \qc. These are the commands:
 \c - an extremely concise response.
 \s{number} - a response with up to {number} sentences.
+\q - the prompt is a question, so just respond to it and dont change any code.
 
 
 ## General
