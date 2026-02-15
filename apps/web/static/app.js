@@ -1,138 +1,206 @@
 (function () {
   const API = window.APP_CONFIG?.apiBase || "http://localhost:8000";
-
   const byId = (id) => document.getElementById(id);
-  const output = byId("output");
-  const resultsList = byId("resultsList");
 
-  function token() {
-    return byId("accessToken").value.trim();
+  const authState = byId("authState");
+  const searchResults = byId("searchResults");
+  const libraryList = byId("libraryList");
+  const nowPlaying = byId("nowPlaying");
+  const player = byId("player");
+  const toast = byId("toast");
+
+  let accessToken = localStorage.getItem("access_token") || "";
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 2400);
   }
 
-  function setOutput(data) {
-    output.textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  function isSignedIn() {
+    return accessToken.length > 0;
   }
 
-  function renderResults(data) {
-    if (!data || !Array.isArray(data.candidates) || data.candidates.length === 0) {
-      resultsList.innerHTML = '<p class="muted">No candidates returned.</p>';
-      return;
-    }
-
-    resultsList.innerHTML = data.candidates
-      .map(
-        (c, idx) => `
-        <article class="result-item">
-          <h3>${idx + 1}. ${c.title || "Untitled"}</h3>
-          <div class="result-meta">Channel: ${c.channel || "Unknown"} | Source: ${c.source_id || "n/a"} | Score: ${typeof c.confidence_score === "number" ? c.confidence_score.toFixed(3) : "n/a"}</div>
-        </article>
-      `
-      )
-      .join("");
+  function refreshAuthState() {
+    authState.textContent = isSignedIn() ? "Signed in" : "Not signed in";
   }
 
   async function api(path, init = {}) {
-    const headers = Object.assign(
-      { "Content-Type": "application/json" },
-      init.headers || {},
-      token() ? { Authorization: `Bearer ${token()}` } : {}
-    );
+    const headers = { "Content-Type": "application/json", ...(init.headers || {}) };
+    if (isSignedIn()) headers.Authorization = `Bearer ${accessToken}`;
+
     const res = await fetch(`${API}${path}`, { ...init, headers });
     const text = await res.text();
-    let data;
+    let data = text;
     try {
       data = JSON.parse(text);
-    } catch {
-      data = text;
-    }
+    } catch {}
     if (!res.ok) {
-      throw { status: res.status, data };
+      const detail = data?.detail || data || `Request failed (${res.status})`;
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
     }
     return data;
   }
 
-  async function handle(action) {
-    try {
-      const result = await action();
-      setOutput(result);
-    } catch (err) {
-      setOutput({ error: true, detail: err.data || err.message || err, status: err.status || 500 });
+  function requireAuth() {
+    if (!isSignedIn()) {
+      showToast("Sign in first.");
+      return false;
     }
+    return true;
   }
 
-  byId("signupBtn").addEventListener("click", () =>
-    handle(async () => {
-      return api("/auth/signup", {
-        method: "POST",
-        body: JSON.stringify({
-          email: byId("email").value.trim(),
-          password: byId("password").value,
-        }),
-      });
-    })
-  );
+  function candidateToImportPayload(c) {
+    return {
+      source_provider: c.source_provider || "youtube",
+      source_id: c.source_id,
+      title: c.title,
+      artist: c.channel || "Unknown",
+      candidate_meta: c,
+    };
+  }
 
-  byId("verifyBtn").addEventListener("click", () =>
-    handle(async () => {
-      return api("/auth/verify-email", {
-        method: "POST",
-        body: JSON.stringify({ token: byId("verifyToken").value.trim() }),
-      });
-    })
-  );
+  function renderSearchResults(data) {
+    const candidates = data?.candidates || [];
+    if (candidates.length === 0) {
+      searchResults.innerHTML = '<p class="hint">No results found.</p>';
+      return;
+    }
 
-  byId("signinBtn").addEventListener("click", () =>
-    handle(async () => {
+    searchResults.innerHTML = "";
+    candidates.forEach((c, idx) => {
+      const item = document.createElement("article");
+      item.className = "item";
+      item.innerHTML = `
+        <div class="item-title">${idx + 1}. ${c.title || "Untitled"}</div>
+        <div class="item-meta">${c.channel || "Unknown"} · score ${typeof c.confidence_score === "number" ? c.confidence_score.toFixed(3) : "n/a"}</div>
+        <div class="row">
+          <button class="add-btn">Add to Library</button>
+          <button class="open-btn secondary">Open on YouTube</button>
+        </div>
+      `;
+      item.querySelector(".add-btn").addEventListener("click", async () => {
+        if (!requireAuth()) return;
+        try {
+          await api("/songs/import", {
+            method: "POST",
+            body: JSON.stringify(candidateToImportPayload(c)),
+          });
+          showToast("Song import started.");
+          await loadLibrary();
+        } catch (err) {
+          showToast(err.message);
+        }
+      });
+      item.querySelector(".open-btn").addEventListener("click", () => {
+        const sourceId = c.source_id;
+        if (!sourceId) {
+          showToast("Missing YouTube source id.");
+          return;
+        }
+        window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(sourceId)}`, "_blank", "noopener,noreferrer");
+      });
+      searchResults.appendChild(item);
+    });
+  }
+
+  async function loadLibrary() {
+    if (!requireAuth()) return;
+    const data = await api("/library");
+    const songs = data?.songs || [];
+    if (songs.length === 0) {
+      libraryList.innerHTML = '<p class="hint">Library is empty.</p>';
+      return;
+    }
+
+    libraryList.innerHTML = "";
+    songs.forEach((song) => {
+      const item = document.createElement("article");
+      item.className = "item";
+      item.innerHTML = `
+        <div class="item-title">${song.title || "Untitled"}</div>
+        <div class="item-meta">${song.artist || "Unknown artist"}</div>
+        <button class="play-btn">Play</button>
+      `;
+      item.querySelector(".play-btn").addEventListener("click", async () => {
+        try {
+          const res = await api(`/stream/${song.id}`);
+          if (!res?.stream_url) throw new Error("Missing stream URL");
+          player.src = res.stream_url;
+          nowPlaying.textContent = `${song.title} - ${song.artist}`;
+          await player.play();
+        } catch (err) {
+          showToast(err.message);
+        }
+      });
+      libraryList.appendChild(item);
+    });
+  }
+
+  byId("signupBtn").addEventListener("click", async () => {
+    try {
+      const email = byId("email").value.trim();
+      const password = byId("password").value;
+      const data = await api("/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      if (data.verification_token) byId("verifyToken").value = data.verification_token;
+      showToast("Signup complete. Verify email, then sign in.");
+    } catch (err) {
+      showToast(err.message);
+    }
+  });
+
+  byId("verifyBtn").addEventListener("click", async () => {
+    try {
+      const token = byId("verifyToken").value.trim();
+      await api("/auth/verify-email", {
+        method: "POST",
+        body: JSON.stringify({ token }),
+      });
+      showToast("Email verified.");
+    } catch (err) {
+      showToast(err.message);
+    }
+  });
+
+  byId("signinBtn").addEventListener("click", async () => {
+    try {
+      const email = byId("email").value.trim();
+      const password = byId("password").value;
       const data = await api("/auth/signin", {
         method: "POST",
-        body: JSON.stringify({
-          email: byId("email").value.trim(),
-          password: byId("password").value,
-        }),
+        body: JSON.stringify({ email, password }),
       });
-      if (data.access_token) byId("accessToken").value = data.access_token;
-      return data;
-    })
-  );
+      accessToken = data.access_token || "";
+      localStorage.setItem("access_token", accessToken);
+      refreshAuthState();
+      showToast("Signed in.");
+      await loadLibrary();
+    } catch (err) {
+      showToast(err.message);
+    }
+  });
 
-  byId("searchBtn").addEventListener("click", () =>
-    handle(async () => {
+  byId("searchBtn").addEventListener("click", async () => {
+    if (!requireAuth()) return;
+    try {
       const q = encodeURIComponent(byId("query").value.trim());
       const data = await api(`/songs/search?q=${q}`);
-      renderResults(data);
-      if (data.candidates?.[0]) {
-        byId("candidateJson").value = JSON.stringify(
-          {
-            source_provider: data.candidates[0].source_provider,
-            source_id: data.candidates[0].source_id,
-            title: data.candidates[0].title,
-            artist: data.candidates[0].channel,
-            candidate_meta: data.candidates[0],
-          },
-          null,
-          2
-        );
-      }
-      return data;
-    })
-  );
-
-  byId("libraryBtn").addEventListener("click", () => handle(() => api("/library")));
-
-  byId("importBtn").addEventListener("click", () =>
-    handle(async () => {
-      let payload = {};
-      try {
-        payload = JSON.parse(byId("candidateJson").value || "{}");
-      } catch {
-        throw new Error("candidate JSON is invalid");
-      }
-      return api("/songs/import", { method: "POST", body: JSON.stringify(payload) });
-    })
-  );
-
-  byId("clearOutputBtn").addEventListener("click", () => {
-    setOutput('{ "ready": true }');
-    renderResults({ candidates: [] });
+      renderSearchResults(data);
+    } catch (err) {
+      showToast(err.message);
+    }
   });
+
+  byId("libraryBtn").addEventListener("click", async () => {
+    try {
+      await loadLibrary();
+    } catch (err) {
+      showToast(err.message);
+    }
+  });
+
+  refreshAuthState();
 })();

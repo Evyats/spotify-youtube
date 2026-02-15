@@ -18,5 +18,5 @@ def score_candidate(query: str, item: dict) -> float:
         score -= 0.15
     views = float(item.get("view_count") or 0)
     if views > 0:
-        score += min(0.12, (views / 100_000_000.0))
+        score += min(0.25, (views / 50_000_000.0))
     return max(0.0, min(1.0, score))

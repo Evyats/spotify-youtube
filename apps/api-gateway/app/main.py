@@ -3,7 +3,6 @@ import os
 import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
 
 from packages.shared.schemas import ImportSongRequest, RefreshRequest, SignInRequest, SignUpRequest, VerifyEmailRequest
 from packages.shared.security import decode_token
@@ -158,7 +157,7 @@ async def stream(song_id: str, claims: dict = Depends(bearer_token_dep)):
     stream_url = r.json().get("stream_url")
     if not stream_url:
         raise HTTPException(status_code=500, detail="missing stream url")
-    return RedirectResponse(stream_url)
+    return {"stream_url": stream_url}
 
 
 @app.get("/jobs/{job_id}")
