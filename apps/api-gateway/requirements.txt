@@ -1,0 +1,17 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.7.0
+httpx==0.28.1
+sqlalchemy==2.0.36
+psycopg[binary]==3.2.3
+redis==5.2.0
+celery==5.4.0
+python-jose[cryptography]==3.3.0
+passlib[argon2]==1.7.4
+boto3==1.35.78
+email-validator==2.2.0
+yt-dlp>=2024.8.6
+argon2-cffi==23.1.0
+alembic==1.14.0
+prometheus-client==0.21.1
