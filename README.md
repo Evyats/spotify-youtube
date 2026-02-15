@@ -59,6 +59,109 @@ docker compose up --build
 - `GET /admin/songs` (admin token)
 - `GET /admin/jobs` (admin token)
 
+## Service Graph
+Generated from `docker-compose.yml`.
+
+### Runtime Communication
+
+```mermaid
+graph LR
+  Browser[Browser]
+  Web[web]
+  APIGW[api-gateway]
+  Auth[auth-service]
+  Search[search-service]
+  Download[download-service]
+  Catalog[catalog-service]
+  Stream[stream-service]
+  Admin[admin-service]
+  Worker[download-worker]
+  PG[(postgres)]
+  Redis[(redis)]
+  MinIO[(minio)]
+  YT[YouTube]
+  Google[Google OAuth]
+
+  Browser -->|HTTP 3000| Web
+  Browser -->|HTTP 8000| APIGW
+
+  Web --> APIGW
+
+  APIGW --> Auth
+  APIGW --> Search
+  APIGW --> Download
+  APIGW --> Catalog
+  APIGW --> Stream
+  APIGW --> Admin
+
+  Auth --> PG
+  Catalog --> PG
+  Download --> PG
+  Stream --> PG
+  Admin --> PG
+  Worker --> PG
+
+  Download --> Redis
+  Worker --> Redis
+
+  Stream --> MinIO
+  Worker --> MinIO
+
+  Search --> YT
+  Worker --> YT
+  Auth --> Google
+```
+
+### Startup / `depends_on`
+
+```mermaid
+graph TD
+  Web[web] --> APIGW[api-gateway]
+
+  APIGW --> Auth[auth-service]
+  APIGW --> Search[search-service]
+  APIGW --> Download[download-service]
+  APIGW --> Catalog[catalog-service]
+  APIGW --> Stream[stream-service]
+
+  DBM[db-migrate] --> PG[(postgres)]
+
+  Auth --> DBM
+  Auth --> PG
+
+  Catalog --> DBM
+  Catalog --> PG
+
+  Download --> DBM
+  Download --> PG
+  Download --> Redis[(redis)]
+
+  Stream --> DBM
+  Stream --> PG
+  Stream --> MinIO[(minio)]
+
+  Admin[admin-service] --> DBM
+  Admin --> PG
+
+  Worker[download-worker] --> DBM
+  Worker --> PG
+  Worker --> Redis
+  Worker --> MinIO
+```
+
+### Outbound Connectivity (Who Can Contact Who)
+- `browser` -> `web`, `api-gateway`
+- `web` -> `api-gateway`
+- `api-gateway` -> `auth-service`, `search-service`, `download-service`, `catalog-service`, `stream-service`, `admin-service`
+- `auth-service` -> `postgres`, `google-oauth`
+- `search-service` -> `youtube`
+- `download-service` -> `postgres`, `redis` (Celery broker/backend)
+- `download-worker` -> `redis` (Celery broker/backend), `postgres`, `minio`, `youtube`
+- `catalog-service` -> `postgres`
+- `stream-service` -> `postgres`, `minio`
+- `admin-service` -> `postgres`
+- `db-migrate` -> `postgres`
+
 ## Notes
 - First signed-up user is assigned `admin` role automatically.
 - With `EMAIL_VERIFY_REQUIRED=1`, users must verify email before signin.
