@@ -2,6 +2,7 @@ import os
 
 import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from packages.shared.schemas import ImportSongRequest, RefreshRequest, SignInRequest, SignUpRequest, VerifyEmailRequest
@@ -11,6 +12,18 @@ from packages.shared.security import decode_token
 app = FastAPI(title="api-gateway")
 from packages.shared.observability import register_observability
 register_observability(app, app.title)
+
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000")
 SEARCH_SERVICE_URL = os.getenv("SEARCH_SERVICE_URL", "http://search-service:8000")

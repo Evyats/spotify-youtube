@@ -1,4 +1,19 @@
 services:
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/python-service.Dockerfile
+      args:
+        APP_DIR: apps/web
+    environment:
+      FRONTEND_INTERNAL_API_BASE: http://api-gateway:8000
+      FRONTEND_PUBLIC_API_BASE: http://localhost:8000
+    ports:
+      - "3000:8000"
+    depends_on:
+      api-gateway:
+        condition: service_started
+
   db-migrate:
     build:
       context: .
@@ -93,7 +108,7 @@ services:
       SERVICE_NAME: auth-service
       JWT_SECRET: dev-secret-change-me
       DB_AUTO_CREATE: "0"
-      EMAIL_VERIFY_REQUIRED: "1"
+      EMAIL_VERIFY_REQUIRED: "0"
       OAUTH_GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
       DATABASE_URL: postgresql+psycopg://app:app@postgres:5432/spotify_youtube
     ports:

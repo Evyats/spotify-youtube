@@ -1,0 +1,45 @@
+import os
+from pathlib import Path
+
+import httpx
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+app = FastAPI(title="web-frontend")
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
+INTERNAL_API_BASE = os.getenv("FRONTEND_INTERNAL_API_BASE", "http://api-gateway:8000")
+PUBLIC_API_BASE = os.getenv("FRONTEND_PUBLIC_API_BASE", "http://localhost:8000")
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok", "service": "web-frontend"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(str(BASE_DIR / "static" / "favicon.svg"), media_type="image/svg+xml")
+
+
+@app.get("/")
+async def index(request: Request):
+    # Quick sanity ping so users see if gateway is reachable.
+    gateway_ok = False
+    try:
+        async with httpx.AsyncClient(timeout=2.5) as client:
+            resp = await client.get(f"{INTERNAL_API_BASE}/health")
+            gateway_ok = resp.status_code == 200
+    except Exception:
+        gateway_ok = False
+
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"api_base": PUBLIC_API_BASE, "gateway_ok": gateway_ok},
+    )

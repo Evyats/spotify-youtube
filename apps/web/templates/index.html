@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waveform Library</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-grid"></div>
+
+    <main class="shell">
+      <section class="hero card reveal">
+        <p class="eyebrow">Personal Audio Vault</p>
+        <h1>Waveform Library</h1>
+        <p class="hero-copy">
+          Search songs, import from YouTube candidates, and stream from your own backend storage.
+        </p>
+        <div class="status">
+          <span class="dot {{ 'ok' if gateway_ok else 'bad' }}"></span>
+          <span>Gateway: <code>{{ api_base }}</code></span>
+          <span class="pill">{{ "Online" if gateway_ok else "Offline" }}</span>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card reveal" style="--d: 0.08s">
+          <h2>Auth</h2>
+          <label>Email</label>
+          <input id="email" placeholder="you@example.com" />
+          <label>Password</label>
+          <input id="password" type="password" placeholder="At least 8 chars" />
+          <div class="actions">
+            <button id="signupBtn">Sign Up</button>
+            <button id="signinBtn" class="soft">Sign In</button>
+          </div>
+          <label>Verification Token</label>
+          <input id="verifyToken" placeholder="Paste token from signup response" />
+          <button id="verifyBtn" class="soft wide">Verify Email</button>
+          <label>Access Token</label>
+          <textarea id="accessToken" rows="4" placeholder="Bearer token appears here"></textarea>
+        </article>
+
+        <article class="card reveal" style="--d: 0.16s">
+          <h2>Search & Import</h2>
+          <label>Song Query</label>
+          <input id="query" placeholder="e.g. daft punk one more time" />
+          <div class="actions">
+            <button id="searchBtn">Search Top 3</button>
+            <button id="libraryBtn" class="soft">My Library</button>
+          </div>
+          <label>Import Candidate JSON</label>
+          <textarea id="candidateJson" rows="6" placeholder='{"source_provider":"youtube","source_id":"...","title":"...","artist":"...","candidate_meta":{}}'></textarea>
+          <button id="importBtn" class="wide">Import Song</button>
+        </article>
+      </section>
+
+      <section class="card reveal" style="--d: 0.24s">
+        <h2>Response Viewer</h2>
+        <p class="muted">Latest API response will appear here.</p>
+        <div class="actions">
+          <button id="clearOutputBtn" class="soft">Clear</button>
+        </div>
+        <pre id="output">{ "ready": true }</pre>
+      </section>
+
+      <section class="card reveal" style="--d: 0.3s">
+        <h2>Top 3 Results</h2>
+        <div id="resultsList" class="results-list">
+          <p class="muted">Run search to populate candidates.</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      window.APP_CONFIG = { apiBase: "{{ api_base }}" };
+    </script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

@@ -32,10 +32,8 @@ docker compose up --build
 ```
 
 ## Frontends
-```bash
-cd apps/web && npm install && npm run dev
-cd apps/admin-web && npm install && npm run dev
-```
+- User frontend is now FastAPI + Uvicorn at `http://localhost:3000` (served by `web` service in Docker Compose).
+- Admin frontend remains in `apps/admin-web` (Next.js scaffold) if you want a separate admin UI later.
 
 ## Main gateway API (`http://localhost:8000`)
 - `POST /auth/signup`

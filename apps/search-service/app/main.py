@@ -26,10 +26,13 @@ def fetch_youtube(query: str, limit: int = 20) -> list[dict]:
 
     ydl_opts = {
         "quiet": True,
+        "no_warnings": True,
         "skip_download": True,
-        "extract_flat": False,
+        "extract_flat": True,
         "default_search": "ytsearch",
         "noplaylist": True,
+        "ignoreerrors": True,
+        "socket_timeout": 8,
     }
     last_error: Exception | None = None
     for _ in range(3):
