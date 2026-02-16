@@ -1,0 +1,53 @@
+name: Security Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python-dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pip-audit
+        run: python -m pip install --upgrade pip pip-audit
+      - name: Audit Python dependencies
+        run: |
+          pip-audit -r apps/api-gateway/requirements.txt
+          pip-audit -r apps/auth-service/requirements.txt
+          pip-audit -r apps/catalog-service/requirements.txt
+          pip-audit -r apps/search-service/requirements.txt
+          pip-audit -r apps/download-service/requirements.txt
+          pip-audit -r apps/download-worker/requirements.txt
+          pip-audit -r apps/stream-service/requirements.txt
+          pip-audit -r apps/admin-service/requirements.txt
+          pip-audit -r apps/web/requirements.txt
+
+  node-dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install admin-web dependencies
+        run: npm --prefix apps/admin-web ci
+      - name: Audit Node dependencies
+        run: npm --prefix apps/admin-web audit --audit-level=high
+
+  trivy-filesystem-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"

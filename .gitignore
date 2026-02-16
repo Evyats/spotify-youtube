@@ -20,6 +20,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+infra/secrets/*
+!infra/secrets/.gitkeep
 
 # Service logs or temp files
 *.log
@@ -51,3 +53,4 @@ infra/docker/data/minio/*
 
 
 AGENTS.md
+agent

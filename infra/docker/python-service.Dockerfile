@@ -15,7 +15,12 @@ RUN apt-get update \
 COPY ${APP_DIR}/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
+RUN useradd --system --create-home --uid 10001 appuser
+
 COPY . /workspace
+RUN chown -R appuser:appuser /workspace
+
+USER appuser
 WORKDIR /workspace/${APP_DIR}
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

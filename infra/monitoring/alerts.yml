@@ -1,0 +1,29 @@
+groups:
+  - name: auth-and-abuse
+    rules:
+      - alert: HighSigninFailures
+        expr: sum(rate(http_requests_total{service="api-gateway",path="/auth/signin",status=~"401|403|429"}[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High signin/auth failure rate"
+          description: "Signin/auth endpoints are returning many 401/403/429 responses."
+
+      - alert: HighRateLimitResponses
+        expr: sum(rate(http_requests_total{service="api-gateway",status="429"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API rate limiting volume"
+          description: "Rate limiting is triggering frequently, potential abuse or misconfiguration."
+
+      - alert: AdminEndpointSpike
+        expr: sum(rate(http_requests_total{service="api-gateway",path=~"/admin/users|/admin/songs|/admin/jobs"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Unexpected high admin endpoint traffic"
+          description: "Admin endpoints are receiving unusual traffic volume."

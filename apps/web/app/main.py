@@ -17,6 +17,24 @@ INTERNAL_API_BASE = os.getenv("FRONTEND_INTERNAL_API_BASE", "http://api-gateway:
 PUBLIC_API_BASE = os.getenv("FRONTEND_PUBLIC_API_BASE", "http://localhost:8000")
 
 
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self'; "
+        "img-src 'self' data:; "
+        "media-src 'self' http://localhost:8005 http://127.0.0.1:8005; "
+        f"connect-src 'self' {PUBLIC_API_BASE} http://localhost:8000 http://127.0.0.1:8000; "
+        "frame-ancestors 'none'"
+    )
+    return response
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "web-frontend"}

@@ -39,6 +39,65 @@ Then edit `.env` and set your real values (especially secrets like `JWT_SECRET`,
 docker compose up --build
 ```
 
+## Exposed Ports
+- `3000` -> user web frontend
+- `8000` -> API gateway
+- `8005` -> signed stream endpoint
+
+Internal services (`auth-service`, `catalog-service`, `search-service`, `download-service`, `admin-service`) and data stores (`postgres`, `redis`, `minio`) are network-internal only.
+
+## Production Deployment (Single VM)
+Use the production override with TLS edge proxy (`edge`) and Docker secrets files:
+
+1. Create secret files:
+- `infra/secrets/jwt_secret.txt`
+- `infra/secrets/internal_service_secret.txt`
+- `infra/secrets/database_url.txt`
+- `infra/secrets/tls.crt`
+- `infra/secrets/tls.key`
+
+2. Set `APP_DOMAIN` and production env values in `.env`.
+
+3. Start:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+In production mode:
+- only `80/443` are exposed via `edge`
+- internal services are not host-exposed
+- `/api/*` is proxied to `api-gateway`
+- `/api/public/stream/*` is proxied to `stream-service`
+- edge applies basic scanner UA blocking + request rate limits on sensitive endpoints
+
+## Secret Manager Integration
+Critical secrets support `*_FILE` loading:
+- `JWT_SECRET_FILE`
+- `INTERNAL_SERVICE_SECRET_FILE`
+- `DATABASE_URL_FILE`
+
+This allows cloud secret manager mounts (or Docker/K8s secret files) without putting secrets directly in env vars.
+
+## Monitoring and Alerts
+Start monitoring stack:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+```
+
+Endpoints:
+- Prometheus: `http://localhost:9090`
+- Alertmanager: `http://localhost:9093`
+
+Alert rules are in `infra/monitoring/alerts.yml` (auth failures, 429 spikes, admin traffic spikes).
+
+## CI Security Scans
+GitHub Actions workflow added at `.github/workflows/security.yml`:
+- `pip-audit` on all Python services
+- `npm audit` for `apps/admin-web`
+- `trivy` filesystem scan for high/critical issues
+
 ## Frontends
 - User frontend is now FastAPI + Uvicorn at `http://localhost:3000` (served by `web` service in Docker Compose).
 - Admin frontend remains in `apps/admin-web` (Next.js scaffold) if you want a separate admin UI later.
@@ -72,6 +131,7 @@ Notes:
 - `POST /auth/verify-email`
 - `POST /auth/signin`
 - `POST /auth/refresh`
+- `POST /auth/logout`
 - `GET /auth/google/login`
 - `GET /auth/google/callback`
 - `GET /songs/search?q=...` (requires bearer token)
@@ -187,8 +247,10 @@ graph TD
 - `db-migrate` -> `postgres`
 
 ## Notes
-- First signed-up user is assigned `admin` role automatically.
+- Admin bootstrap is controlled by `ADMIN_BOOTSTRAP_EMAIL` (no automatic first-user admin).
 - With `EMAIL_VERIFY_REQUIRED=1`, users must verify email before signin.
-- In dev, signup response includes verification token (email delivery service not yet added).
+- In dev, signup response can include verification token only when `EXPOSE_VERIFICATION_TOKEN=1`.
+- Refresh token is stored in an HttpOnly cookie by gateway (`/auth/signin` and `/auth/refresh`).
+- Internal service-to-service calls are protected with short-lived `X-Service-Token`.
 - Worker uses `yt-dlp` and `ffmpeg` to fetch/transcode audio to AAC 256kbps.
 - YouTube download/storage legal and platform-policy review is required before production.

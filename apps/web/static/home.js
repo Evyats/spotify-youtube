@@ -49,9 +49,16 @@
   });
 
   byId("signoutBtn")?.addEventListener("click", () => {
-    setToken("");
-    setSessionEmail("");
-    renderAuthState();
-    showToast("Signed out.");
+    (async () => {
+      try {
+        await api("/auth/logout", { method: "POST", body: "{}" });
+      } catch (err) {
+        // Continue local signout even if server logout fails.
+      }
+      setToken("");
+      setSessionEmail("");
+      renderAuthState();
+      showToast("Signed out.");
+    })();
   });
 })();

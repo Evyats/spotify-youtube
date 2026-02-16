@@ -8,16 +8,13 @@ export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accessToken, setAccessToken] = useState("");
-  const [refreshToken, setRefreshToken] = useState("");
   const [authStatus, setAuthStatus] = useState("");
   const [output, setOutput] = useState("{}");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const savedAccess = window.localStorage.getItem("admin_access_token") ?? "";
-    const savedRefresh = window.localStorage.getItem("admin_refresh_token") ?? "";
     setAccessToken(savedAccess);
-    setRefreshToken(savedRefresh);
   }, []);
 
   const signedIn = useMemo(() => accessToken.length > 0, [accessToken]);
@@ -26,6 +23,7 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const res = await fetch(`${API}${path}`, {
+        credentials: "include",
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const json = await res.json();
@@ -44,6 +42,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API}/auth/signin`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
@@ -54,11 +53,8 @@ export default function AdminPage() {
         return;
       }
       const nextAccess = json.access_token ?? "";
-      const nextRefresh = json.refresh_token ?? "";
       setAccessToken(nextAccess);
-      setRefreshToken(nextRefresh);
       window.localStorage.setItem("admin_access_token", nextAccess);
-      window.localStorage.setItem("admin_refresh_token", nextRefresh);
       setAuthStatus("Signed in successfully.");
       setOutput(JSON.stringify(json, null, 2));
     } catch (error) {
@@ -69,13 +65,22 @@ export default function AdminPage() {
     }
   }
 
-  function signOut() {
-    setAccessToken("");
-    setRefreshToken("");
-    setPassword("");
-    setAuthStatus("Signed out.");
-    window.localStorage.removeItem("admin_access_token");
-    window.localStorage.removeItem("admin_refresh_token");
+  async function signOut() {
+    setLoading(true);
+    try {
+      await fetch(`${API}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+    } finally {
+      setAccessToken("");
+      setPassword("");
+      setAuthStatus("Signed out.");
+      window.localStorage.removeItem("admin_access_token");
+      setLoading(false);
+    }
   }
 
   return (
@@ -152,7 +157,7 @@ export default function AdminPage() {
           </button>
         </div>
         <p style={{ marginTop: 10, marginBottom: 0, color: "#475569", fontSize: 14 }}>
-          Access token length: {accessToken.length} | Refresh token length: {refreshToken.length}
+          Access token length: {accessToken.length} | Refresh token stored in HttpOnly cookie
         </p>
       </section>
 

@@ -4,11 +4,13 @@ from collections.abc import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
+from packages.shared.secrets import read_env_or_file
+
 Base = declarative_base()
 
 
 def get_database_url() -> str:
-    return os.getenv("DATABASE_URL", "postgresql+psycopg://app:app@localhost:5432/spotify_youtube")
+    return read_env_or_file("DATABASE_URL", "postgresql+psycopg://app:app@localhost:5432/spotify_youtube") or "postgresql+psycopg://app:app@localhost:5432/spotify_youtube"
 
 
 def make_engine():

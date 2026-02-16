@@ -1,0 +1,90 @@
+map $http_user_agent $is_bad_bot {
+    default 0;
+    ~*(sqlmap|nikto|acunetix|nessus|nmap|masscan) 1;
+}
+
+limit_req_zone $binary_remote_addr zone=auth_zone:10m rate=10r/m;
+limit_req_zone $binary_remote_addr zone=search_zone:20m rate=120r/m;
+limit_req_zone $binary_remote_addr zone=import_zone:10m rate=60r/h;
+
+server {
+    listen 80;
+    server_name ${APP_DOMAIN};
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name ${APP_DOMAIN};
+
+    ssl_certificate     /run/secrets/tls_cert;
+    ssl_certificate_key /run/secrets/tls_key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    if ($is_bad_bot = 1) {
+        return 403;
+    }
+
+    location /api/public/stream/ {
+        proxy_pass http://stream-service:8000/public/stream/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Range $http_range;
+    }
+
+    location = /api/auth/signup {
+        limit_req zone=auth_zone burst=10 nodelay;
+        proxy_pass http://api-gateway:8000/auth/signup;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location = /api/auth/signin {
+        limit_req zone=auth_zone burst=10 nodelay;
+        proxy_pass http://api-gateway:8000/auth/signin;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location = /api/songs/search {
+        limit_req zone=search_zone burst=30 nodelay;
+        proxy_pass http://api-gateway:8000/songs/search$is_args$args;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location = /api/songs/import {
+        limit_req zone=import_zone burst=5 nodelay;
+        proxy_pass http://api-gateway:8000/songs/import;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location /api/ {
+        proxy_pass http://api-gateway:8000/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location / {
+        proxy_pass http://web:8000/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}

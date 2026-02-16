@@ -10,6 +10,7 @@ from sqlalchemy import and_, select
 
 from packages.shared.db import make_engine, make_session_local
 from packages.shared.models import DownloadJob, Song, UserSong
+from packages.shared.security import validate_security_runtime
 
 try:
     from yt_dlp import YoutubeDL
@@ -26,6 +27,7 @@ S3_BUCKET = os.getenv("S3_BUCKET", "songs")
 
 celery_app = Celery("download-worker", broker=broker_url, backend=result_backend)
 celery_app.conf.broker_connection_retry_on_startup = True
+validate_security_runtime()
 engine = make_engine()
 SessionLocal = make_session_local()
 

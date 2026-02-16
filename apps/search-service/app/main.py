@@ -1,8 +1,12 @@
-from fastapi import FastAPI
+import os
+
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from pydantic import BaseModel
 
+from packages.shared.internal_auth import decode_service_token
 from packages.shared.ranking import score_candidate
 from packages.shared.schemas import SearchResponse, SongCandidate
+from packages.shared.security import validate_security_runtime
 
 try:
     from yt_dlp import YoutubeDL
@@ -13,6 +17,8 @@ except Exception:
 app = FastAPI(title="search-service")
 from packages.shared.observability import register_observability
 register_observability(app, app.title)
+validate_security_runtime()
+SERVICE_NAME = os.getenv("SEARCH_SERVICE_NAME", "search-service")
 
 
 class SearchRequest(BaseModel):
@@ -48,13 +54,22 @@ def fetch_youtube(query: str, limit: int = 20) -> list[dict]:
     return []
 
 
+def internal_service_dep(x_service_token: str | None = Header(default=None, alias="X-Service-Token")) -> dict:
+    if not x_service_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing internal service token")
+    try:
+        return decode_service_token(x_service_token, SERVICE_NAME)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "search-service"}
 
 
 @app.post("/internal/search", response_model=SearchResponse)
-def search(payload: SearchRequest) -> SearchResponse:
+def search(payload: SearchRequest, _: dict = Depends(internal_service_dep)) -> SearchResponse:
     raw = fetch_youtube(payload.query, 20)
     if not raw:
         raw = [

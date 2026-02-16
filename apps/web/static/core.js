@@ -1,5 +1,6 @@
 (function () {
-  const API = window.APP_CONFIG?.apiBase || "http://localhost:8000";
+  const metaApiBase = document.querySelector('meta[name="app-api-base"]')?.getAttribute("content");
+  const API = metaApiBase || "http://localhost:8000";
   const toast = document.getElementById("toast");
 
   function showToast(msg) {
@@ -54,7 +55,7 @@
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    const res = await fetch(`${API}${path}`, { ...init, headers });
+    const res = await fetch(`${API}${path}`, { ...init, headers, credentials: "include" });
     const text = await res.text();
     let data = text;
     try {
