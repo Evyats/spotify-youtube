@@ -1,0 +1,31 @@
+.git
+.gitignore
+.pytest_cache
+.mypy_cache
+.ruff_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+
+# Node/build artifacts
+node_modules
+apps/admin-web/node_modules
+apps/admin-web/.next
+dist
+build
+coverage
+
+# Local env/secrets
+.env
+infra/secrets/*
+
+# Local runtime data volumes (must never be sent as build context)
+infra/docker/data/**
+
+# Misc OS/IDE
+.DS_Store
+Thumbs.db
+.idea
+.vscode
