@@ -2,16 +2,11 @@ services:
   web:
     build:
       context: .
-      dockerfile: infra/docker/python-service.Dockerfile
-      args:
-        APP_DIR: apps/web
+      dockerfile: infra/docker/web-vite.Dockerfile
     environment:
-      FRONTEND_INTERNAL_API_BASE: ${FRONTEND_INTERNAL_API_BASE}
-      FRONTEND_PUBLIC_API_BASE: ${FRONTEND_PUBLIC_API_BASE}
-      APP_ENV: ${APP_ENV}
-      ENFORCE_STRICT_SECURITY: ${ENFORCE_STRICT_SECURITY}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     ports:
-      - "3000:8000"
+      - "3000:3000"
     depends_on:
       api-gateway:
         condition: service_started
