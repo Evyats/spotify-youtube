@@ -39,6 +39,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 coverage/
+*.tsbuildinfo
 
 
 # Local persisted infra data (keep folder structure only)

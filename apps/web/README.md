@@ -1,32 +1,28 @@
 # web
 
-User-facing FastAPI frontend with routed pages for account, search, and library playback.
+Main user frontend built with Vite + React + TypeScript + Tailwind.
 
 ## Env Vars
 
 | Variable | Required | Example |
 |---|---|---|
-| `FRONTEND_INTERNAL_API_BASE` | Yes | `http://api-gateway:8000` |
-| `FRONTEND_PUBLIC_API_BASE` | Yes | `http://localhost:8000` |
+| `VITE_API_BASE_URL` | Yes | `http://localhost:8000` |
 
 ## Local Setup (No Docker)
 
 ```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-pip install -r requirements.txt
+npm install
+npm run dev
 ```
 
-Set env vars, then run:
+Open `http://localhost:3000`.
+
+## Build
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+npm run build
 ```
 
-## Networking
-- Service listens on `8000`.
-- In Docker compose, it is exposed as `3000:8000`.
-
-## Endpoint
-- `GET /health`
+## Docker
+- Local dev compose runs Vite dev server and exposes `3000:3000`.
+- Production compose override builds static assets and serves them via Nginx on internal port `80`.

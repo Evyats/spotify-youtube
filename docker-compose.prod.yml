@@ -1,10 +1,11 @@
 services:
   web:
+    build:
+      context: .
+      dockerfile: infra/docker/web-static.Dockerfile
+      args:
+        VITE_API_BASE_URL: https://${APP_DOMAIN}/api
     ports: []
-    environment:
-      APP_ENV: production
-      ENFORCE_STRICT_SECURITY: "1"
-      FRONTEND_PUBLIC_API_BASE: https://${APP_DOMAIN}/api
 
   api-gateway:
     ports: []

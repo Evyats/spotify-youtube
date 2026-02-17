@@ -2,6 +2,12 @@
 
 Python-first microservices MVP for a Spotify-like app with YouTube search/import flow.
 
+## Main Frontend Stack
+- Vite
+- React
+- TypeScript
+- Tailwind CSS
+
 ## TL;DR
 1. Copy env file:
 ```bash
@@ -162,6 +168,7 @@ In prod:
 - edge proxy exposes only `80/443`
 - `/api/*` -> `api-gateway`
 - `/api/public/stream/*` -> `stream-service`
+- `web` is built as static assets and served by Nginx (SPA fallback enabled)
 
 ## Security Highlights
 - Internal service auth via short-lived `X-Service-Token`

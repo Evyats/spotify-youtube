@@ -26,7 +26,6 @@ jobs:
           pip-audit --ignore-vuln CVE-2024-23342 -r apps/download-worker/requirements.txt
           pip-audit --ignore-vuln CVE-2024-23342 -r apps/stream-service/requirements.txt
           pip-audit --ignore-vuln CVE-2024-23342 -r apps/admin-service/requirements.txt
-          pip-audit --ignore-vuln CVE-2024-23342 -r apps/web/requirements.txt
 
   node-dependency-audit:
     runs-on: ubuntu-latest
@@ -37,8 +36,12 @@ jobs:
           node-version: "20"
       - name: Install admin-web dependencies
         run: npm --prefix apps/admin-web ci
-      - name: Audit Node dependencies
+      - name: Install web dependencies
+        run: npm --prefix apps/web ci
+      - name: Audit admin-web dependencies
         run: npm --prefix apps/admin-web audit --audit-level=high
+      - name: Audit web dependencies
+        run: npm --prefix apps/web audit --audit-level=high
 
   trivy-filesystem-scan:
     runs-on: ubuntu-latest
